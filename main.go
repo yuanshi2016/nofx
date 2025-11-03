@@ -31,7 +31,6 @@ type ConfigFile struct {
 	DefaultCoins       []string       `json:"default_coins"`
 	CoinPoolAPIURL     string         `json:"coin_pool_api_url"`
 	OITopAPIURL        string         `json:"oi_top_api_url"`
-	InsideCoins        bool           `json:"inside_coins"`
 	MaxDailyLoss       float64        `json:"max_daily_loss"`
 	MaxDrawdown        float64        `json:"max_drawdown"`
 	StopTradingMinutes int            `json:"stop_trading_minutes"`
@@ -69,7 +68,6 @@ func syncConfigToDatabase(database *config.Database) error {
 		"use_default_coins":    fmt.Sprintf("%t", configFile.UseDefaultCoins),
 		"coin_pool_api_url":    configFile.CoinPoolAPIURL,
 		"oi_top_api_url":       configFile.OITopAPIURL,
-		"inside_coins":         fmt.Sprintf("%t", configFile.InsideCoins),
 		"max_daily_loss":       fmt.Sprintf("%.1f", configFile.MaxDailyLoss),
 		"max_drawdown":         fmt.Sprintf("%.1f", configFile.MaxDrawdown),
 		"stop_trading_minutes": strconv.Itoa(configFile.StopTradingMinutes),
@@ -264,8 +262,9 @@ func main() {
 	}()
 
 	// 启动流行情数据 - 默认使用所有交易员设置的币种 如果没有设置币种 则优先使用系统默认
-	go market.NewWSMonitor(150).Start(database.GetCustomCoins())
-	//go market.NewWSMonitor(150).Start([]string{}) //这里是一个使用方式 传入空的话 则使用market市场的所有币种
+	defer market.WSMonitorCli.Close()
+	go market.NewWSMonitor(150, []string{"3m", "5m", "15m", "1h", "4h"}).Start(database.GetCustomCoins())
+	//go market.NewWSMonitor(150, []string{"3m", "5m", "15m", "1h", "4h"}).Start([]string{}) //这里是一个使用方式 传入空的话 则使用market市场的所有币种
 	// 设置优雅退出
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
