@@ -16,10 +16,10 @@ import (
 // AutoTraderConfig 自动交易配置（简化版 - AI全权决策）
 type AutoTraderConfig struct {
 	// Trader标识
-	ID      string // Trader唯一标识（用于日志目录等）
-	Name    string // Trader显示名称
-	AIModel string // AI模型: "qwen" 或 "deepseek"
-
+	ID          string // Trader唯一标识（用于日志目录等）
+	Name        string // Trader显示名称
+	AIModel     string // AI模型: "qwen" 或 "deepseek"
+	UseCoinPool bool   //是否使用COIN POOL 信号源
 	// 交易平台选择
 	Exchange string // "binance", "hyperliquid" 或 "aster"
 
@@ -197,7 +197,6 @@ func NewAutoTrader(config AutoTraderConfig) (*AutoTrader, error) {
 	if systemPromptTemplate == "" {
 		systemPromptTemplate = "default" // 默认使用 default 模板
 	}
-
 	return &AutoTrader{
 		id:                    config.ID,
 		name:                  config.Name,
@@ -1016,8 +1015,7 @@ func (at *AutoTrader) getCandidateCoins() ([]decision.CandidateCoin, error) {
 	if len(at.tradingCoins) == 0 {
 		// 使用数据库配置的默认币种列表
 		var candidateCoins []decision.CandidateCoin
-
-		if len(at.defaultCoins) > 0 {
+		if len(at.defaultCoins) > 0 && !at.config.UseCoinPool {
 			// 使用数据库中配置的默认币种
 			for _, coin := range at.defaultCoins {
 				symbol := normalizeSymbol(coin)
@@ -1037,7 +1035,6 @@ func (at *AutoTrader) getCandidateCoins() ([]decision.CandidateCoin, error) {
 			if err != nil {
 				return nil, fmt.Errorf("获取合并币种池失败: %w", err)
 			}
-
 			// 构建候选币种列表（包含来源信息）
 			for _, symbol := range mergedPool.AllSymbols {
 				sources := mergedPool.SymbolSources[symbol]
