@@ -116,7 +116,7 @@ func (m *WSMonitor) Start(coins []string) {
 	// 初始化交易对
 	err := m.Initialize(coins)
 	if err != nil {
-		log.Fatalf("❌ 初始化币种: %v", err)
+		log.Printf("❌ 初始化币种失败: %v", err)
 		return
 	}
 }
